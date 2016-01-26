@@ -51,7 +51,7 @@ static char * registers[] = {
 typedef struct node_str {
     struct node_str * next_node;
     char * label_p;
-    unsigned int label_address;
+    int * label_address;
     
 } NODE_STR;
 typedef NODE_STR * NODE_STR_p;
@@ -59,15 +59,15 @@ typedef NODE_STR * NODE_STR_p;
 /* CPU_assembler
  *
  */
-typedef struct assembler_type {
+typedef struct assembler_str {
     NODE_STR_p symbolTable_head;
     NODE_STR_p symbolTable_tail;
     unsigned int num_of_symbols;
-} ASSEMBLER;
-typedef ASSEMBLER * ASSEMBLER_p;
+} ASSEMBLER_STR;
+typedef ASSEMBLER_STR * ASSEMBLER_STR_p;
 
 /* Prototypes */
-void firstParse (ASSEMBLER_p); //gathers all labels and assigns them addresses
-void assemble (ASSEMBLER_p);
+void firstParse (ASSEMBLER_STR_p); //gathers all labels and assigns them addresses
+void assemble (ASSEMBLER_STR_p);
 
 #endif /* ASSEMBLER_H_ */

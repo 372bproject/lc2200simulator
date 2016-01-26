@@ -11,11 +11,11 @@
 /* CPU_register
  *
  */
-typedef struct cpu_register_type {
+typedef struct cpu_register_str {
     char reg_name[5];
     unsigned int reg_value;     /* stores value held within register */
-} CPU_REGISTER;
-typedef CPU_REGISTER * REGISTER_p;
+} CPU_REGISTER_STR;
+typedef CPU_REGISTER_STR * REGISTER_STR_p;
 
 
 /* Prototypes */

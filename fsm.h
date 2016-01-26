@@ -13,11 +13,11 @@
 #include "alu.h"
 #include "interrupts.h"
 
-typedef void (*functionPtr) (REGISTER_p, REGISTER_p, REGISTER_p);
+typedef void (*functionPtr) (REGISTER_STR_p, REGISTER_STR_p, REGISTER_STR_p);
 
 /* Prototypes */
-void fetch (MEMORY_MODULE_p);
-functionPtr * decode (unsigned int, REGISTER_p, REGISTER_p, REGISTER_p); //opcode, output register, operandA, operandB, returns pointer to function
+void fetch (MEMORY_MODULE_STR_p);
+functionPtr * decode (unsigned int, REGISTER_STR_p, REGISTER_STR_p, REGISTER_STR_p); //opcode, output register, operandA, operandB, returns pointer to function
 void execute (functionPtr, unsigned int *, unsigned int *, unsigned int *); //function to be executed, and three arguments to functions, which are absolute addresses
 
 
