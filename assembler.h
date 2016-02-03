@@ -10,9 +10,12 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+#include <stdlib.h>
 #include "hashmap.h"
 
-#define GLOBAL_OP_REG_STRING_SIZE 5
+#define GLOBAL_OP_REG_STRING_SIZE 6
 
 /* CPU_assembler
  *
@@ -31,7 +34,7 @@ typedef ASSEMBLER_STR * ASSEMBLER_STR_p;
  */
     static char operations_arr[][GLOBAL_OP_REG_STRING_SIZE] = {
     "add", //0000
-    "not", //0001
+    "nand", //0001
     "addi", //0010
     "lw", //0011
     "sw", //0100
@@ -39,30 +42,30 @@ typedef ASSEMBLER_STR * ASSEMBLER_STR_p;
     "jalr", //0110
     "halt", //0111
     "sub", //1000
-    "and", //1001
-    "ret", //1010
+    "ei", //1001 enable interrupts
+    "di", //1010 disable interrupts
     "reti", //1011
-    "sub", //1100
-    "nop" //1101
+    "noop", //1100
+    ".word" //1101 fill the word with a value. Ex.: fill the current location with the 32-bit representation of the nubmer "32"
     
 }; //note: each string is 5 bytes long, \0 may be automatically added to end of each string
 
 static char * registers_arr[] = {
-    "zero", //0000
-    "at", //0001
-    "v0", //0010
-    "a0", //0011
-    "a1", //0100
-    "a2", //0101
-    "t0", //0110
-    "t1", //0111
-    "t2", //1000
-    "s0", //1001
-    "s1", //1010
-    "k0", //1011
-    "sp", //1100
-    "fp", //1101
-    "ra" //1101
+    "$zero", //0000
+    "$at", //0001
+    "$v0", //0010
+    "$a0", //0011
+    "$a1", //0100
+    "$a2", //0101
+    "$t0", //0110
+    "$t1", //0111
+    "$t2", //1000
+    "$s0", //1001
+    "$s1", //1010
+    "$k0", //1011
+    "$sp", //1100
+    "$fp", //1101
+    "$ra" //1101
 };
 
 static int * index_to_int_ptr[] = {
@@ -86,8 +89,8 @@ static int * index_to_int_ptr[] = {
 
 /* Prototypes */
 ASSEMBLER_STR_p ASSEMBLER_constructor();
-void assemble (ASSEMBLER_STR_p, char *, char *);
+void assemble (char *);
 void firstParse (ASSEMBLER_STR_p); //gathers all labels and assigns them addresses
-
+char * trimwhitespace (char *);
 
 #endif /* ASSEMBLER_H_ */
