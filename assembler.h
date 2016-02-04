@@ -89,8 +89,10 @@ static int * index_to_int_ptr[] = {
 
 /* Prototypes */
 ASSEMBLER_STR_p ASSEMBLER_constructor();
+void ASSEMBLER_destructor(ASSEMBLER_STR_p);
 void assemble (char *);
 void firstParse (ASSEMBLER_STR_p); //gathers all labels and assigns them addresses
 char * trimwhitespace (char *);
+
 
 #endif /* ASSEMBLER_H_ */
