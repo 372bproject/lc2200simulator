@@ -30,6 +30,7 @@ ASSEMBLER_STR_p ASSEMBLER_constructor() {
     ASSEMBLER_STR_p this = (ASSEMBLER_STR_p) malloc(sizeof(ASSEMBLER_STR_p));
     
     //declare maps
+    map_t sacrificial_bugged_map = hashmap_new();
     map_t symbolTable = hashmap_new();
     map_t operationsMap = hashmap_new();
     map_t registersMap = hashmap_new();
@@ -41,6 +42,7 @@ ASSEMBLER_STR_p ASSEMBLER_constructor() {
     //operations
     int i;
     int num_elements_in_operations_arr = sizeof(operations_arr) / (sizeof(char) * GLOBAL_OP_REG_STRING_SIZE);
+    
     for (i = 0; i < num_elements_in_operations_arr; i++) {
         hashmap_put(operationsMap, operations_arr[i], index_to_int_ptr[i]);
     }
@@ -51,7 +53,8 @@ ASSEMBLER_STR_p ASSEMBLER_constructor() {
         //printf("%s\n", registers_arr[i]);
         hashmap_put(registersMap, registers_arr[i], index_to_int_ptr[i]);
     }
-
+    
+    this->sacrificial_bugged_map = sacrificial_bugged_map;
     this->symbol_table_map = symbolTable;
     this->operations_map = operationsMap;
     this->registers_map = registersMap;
@@ -91,6 +94,7 @@ void assemble (char * loc_assem_file) {
     FILE * wfp;
     int line_buffer_size = sizeof(char) * 40;
     int opcode;
+    int line_num = 0;
     char * loc_object_file;
     char * line_ptr = malloc(line_buffer_size);
     char * line_ptr_copy;
@@ -100,6 +104,7 @@ void assemble (char * loc_assem_file) {
     unsigned int token_in_bits; //uint32_t token_in_bits;
     unsigned int bit_instruct_32; //uint32_t bit_instruct_32;
     map_t map_clone;
+    
     
     //open assembly source
     rfp = fopen(loc_assem_file, "r");
@@ -118,10 +123,20 @@ void assemble (char * loc_assem_file) {
     
     ASSEMBLER_STR_p this = ASSEMBLER_constructor();
     
+    //first parse (for labels)
+    firstParse(this, rfp);
+    
     while (fgets(line_ptr, line_buffer_size, rfp)) {
+        
+        //skip line if contains format LABEL:
+        if (strstr(line_ptr, ":") != NULL) {
+            continue;
+        }
+        
         line_ptr_copy = line_ptr;
         bit_instruct_32 = 0;
         token = strsep(&line_ptr_copy, " ");
+        stringToLowerCase(token);
         
         //take opcode, put it in bit form
         map_clone = this->operations_map;
@@ -135,6 +150,7 @@ void assemble (char * loc_assem_file) {
         while (line_ptr_copy != NULL) {
             if (strstr(line_ptr_copy, ",") != NULL) { //if contains comma
                 token = strsep(&line_ptr_copy, ",");
+                stringToLowerCase(token);
                 line_ptr_copy = trimwhitespace(line_ptr_copy);
             } else {
                 token = line_ptr_copy;
@@ -151,11 +167,18 @@ void assemble (char * loc_assem_file) {
                 token_in_bits = atoi(token);
                 bit_instruct_32 = bit_instruct_32 | token_in_bits;
                 line_ptr_copy = NULL;
+            } else if (line_ptr_copy == NULL && (opcode == 5 || opcode == 6)) { //if last object is label
+                int *label_line_offset;
+                stringToLowerCase(token);
+                map_clone = this->symbol_table_map;
+                hashmap_get(map_clone, token, &label_line_offset); //printf("%d\n\n",*label_line_offset);
+                bit_instruct_32 = bit_instruct_32 | (0x000000FF & (*label_line_offset - line_num)); //copy offset from current instruct line num into bit_instruct_32
             } else if (isdigit(token)) { //if immediate value
                 token_in_bits = atoi(token);
                 //write 16 bit number into last 32 bits of bit_instruct_32
                 bit_instruct_32 = bit_instruct_32 | token_in_bits;
             } else { // else if register
+                stringToLowerCase(token);
                 map_clone = this->registers_map;
                 hashmap_get(map_clone, token, &token_in_bits);
                 bit_instruct_32 = bit_instruct_32 | (token_in_bits << bitshift);
@@ -167,7 +190,10 @@ void assemble (char * loc_assem_file) {
         //write bitcode to object file
         fprintf(wfp, "%08x", bit_instruct_32);
         printf("%08x\n", bit_instruct_32);
+        
+        line_num += 1;
     }
+    
     
     fclose(rfp);
     fclose(wfp);
@@ -176,8 +202,48 @@ void assemble (char * loc_assem_file) {
     
     ASSEMBLER_destructor(this);
     //print_keyset(this->operations_map);
-    //map_t map_clone = this->operations_map;
+    //print_keyset(this->symbol_table_map);
+    //print_keyset(this->registers_map);
     
+    
+}
+
+/*
+ * firstParse
+ *
+ * Maps offset of labels from first instruction (in source assembly file).
+ *
+ * params:  ASSEMBLER_STR_p this
+ *          FILE *          file pointer for source assembly file
+ *
+ * return:  none
+ */
+void firstParse(ASSEMBLER_STR_p this, FILE * source_file_ptr) {
+    
+    int line_buffer_size = sizeof(char) * 40;
+    int line_num = 0;
+    int * label_offset_ptr;
+    char * token;
+    char * line_ptr = (char *) malloc(line_buffer_size);
+
+    while (fgets(line_ptr, line_buffer_size, source_file_ptr)) {
+        
+        if (strstr(line_ptr, ":") != NULL) { //search for formatting of LABEL:
+            token = (char *) malloc(sizeof(char) * 27);
+            strcpy(token, strtok(line_ptr, ":"));
+            stringToLowerCase(token);
+            label_offset_ptr = (int *) malloc(sizeof(int));
+            *label_offset_ptr = line_num;
+            hashmap_put(this->symbol_table_map, token, label_offset_ptr);
+        } else { //lines with labels do not count as their own lines
+            line_num += 1;
+        }
+        
+        
+    }
+    
+    //reset source_file_ptr to beginning of source assembly file
+    rewind(source_file_ptr);
 }
 
 
@@ -204,4 +270,20 @@ char * trimwhitespace(char * str)
     *(end+1) = 0;
     
     return str;
+}
+
+/* stringToLowerCase
+ *
+ * Converts string to lower case
+ * Changes input string
+ *
+ * params:  char *       string that is to be converted to lower case
+ *
+ * return:  none
+ */
+void stringToLowerCase(char * str) {
+    int i;
+    for (i = 0; str[i]; i++) {
+        str[i] = tolower(str[i]);
+    }
 }
