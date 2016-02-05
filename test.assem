@@ -1,0 +1,4 @@
+add $v0, $a1, $s0
+done:
+lw $a0, 20($a1)
+beq $a0, $a1, done
