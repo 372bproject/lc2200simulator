@@ -7,14 +7,6 @@
 
 #include "assembler.h"
 
-int main () {
-    char * absolute_path = malloc(sizeof(char) * 100);
-    strcpy(absolute_path, "./test.assem");
-    assemble(absolute_path);
-    
-    free(absolute_path);
-}
-
 
 /*
  * ASSEMBLER_constructor
@@ -88,10 +80,10 @@ void ASSEMBLER_destructor(ASSEMBLER_STR_p this) {
  * 
  * return:  none
  */
-void assemble (char * loc_assem_file) {
+void assemble (char * loc_assem_file, unsigned int * instructions_array) {
     
     FILE * rfp; //read file pointer
-    FILE * wfp;
+//    FILE * wfp;
     int line_buffer_size = sizeof(char) * 40;
     unsigned int opcode;
     int line_num = 0;
@@ -118,9 +110,9 @@ void assemble (char * loc_assem_file) {
     strcat(loc_object_file, ".object");
     
     //open object file to write to
-    wfp = fopen("./test.object", "w");
-    if (wfp == NULL)
-        exit(EXIT_FAILURE);
+//    wfp = fopen("./test.object", "w");
+//    if (wfp == NULL)
+//        exit(EXIT_FAILURE);
     
     ASSEMBLER_STR_p this = ASSEMBLER_constructor();
     
@@ -138,7 +130,7 @@ void assemble (char * loc_assem_file) {
         bit_instruct_32 = 0;
         token = strsep(&line_ptr_copy, " ");
         stringToLowerCase(token);
-	line_ptr = line_ptr_copy;
+        line_ptr = line_ptr_copy;
         
         //take opcode, put it in bit form
         map_clone = this->operations_map; 
@@ -148,7 +140,7 @@ void assemble (char * loc_assem_file) {
         opcode = token_in_bits;
         bit_instruct_32 = token_in_bits << 28; //bits 0-3
         
-	line_ptr_copy = line_ptr; 
+        line_ptr_copy = line_ptr;
 
         int bitshift = 24; 
         while (line_ptr_copy != NULL) { 
@@ -202,16 +194,18 @@ void assemble (char * loc_assem_file) {
         }
 
         //write bitcode to object file
-        fprintf(wfp, "%08x", bit_instruct_32); 
-        printf("%08x\n", bit_instruct_32);
-
+//        fprintf(wfp, "%08x", bit_instruct_32); 
+//        printf("%08x\n", bit_instruct_32);
+        instructions_array[line_num] = bit_instruct_32;
+        
+        
         line_num += 1;
-	line_ptr = line_malloc_loc;
+        line_ptr = line_malloc_loc;
     }
     
     
     fclose(rfp);
-    fclose(wfp);
+//    fclose(wfp);
     free(line_ptr);
     free(loc_object_file);
     
