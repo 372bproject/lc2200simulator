@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include "hashmap.h"
 
 #define GLOBAL_OP_REG_STRING_SIZE 6

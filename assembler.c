@@ -9,7 +9,7 @@
 
 int main () {
     char * absolute_path = malloc(sizeof(char) * 100);
-    strcpy(absolute_path, "/Users/temp/Documents/tcss_372/git_repo/lc2200simulator/test.assem");
+    strcpy(absolute_path, "./test.assem");
     assemble(absolute_path);
     
     free(absolute_path);
@@ -93,11 +93,12 @@ void assemble (char * loc_assem_file) {
     FILE * rfp; //read file pointer
     FILE * wfp;
     int line_buffer_size = sizeof(char) * 40;
-    int opcode;
+    unsigned int opcode;
     int line_num = 0;
     char * loc_object_file;
     char * line_ptr = malloc(line_buffer_size);
     char * line_ptr_copy;
+    char * line_malloc_loc = line_ptr;
     char * token;
     char * token2;
     ssize_t num_char_read;
@@ -117,7 +118,7 @@ void assemble (char * loc_assem_file) {
     strcat(loc_object_file, ".object");
     
     //open object file to write to
-    wfp = fopen(loc_object_file, "w");
+    wfp = fopen("./test.object", "w");
     if (wfp == NULL)
         exit(EXIT_FAILURE);
     
@@ -137,61 +138,75 @@ void assemble (char * loc_assem_file) {
         bit_instruct_32 = 0;
         token = strsep(&line_ptr_copy, " ");
         stringToLowerCase(token);
+	line_ptr = line_ptr_copy;
         
         //take opcode, put it in bit form
-        map_clone = this->operations_map;
-        hashmap_get(map_clone, token, &token_in_bits);
+        map_clone = this->operations_map; 
+        hashmap_get(map_clone, token, &token_in_bits); 
         
         //bitshift to appropriate position in 32 bit bitcode
         opcode = token_in_bits;
         bit_instruct_32 = token_in_bits << 28; //bits 0-3
         
-        int bitshift = 24;
-        while (line_ptr_copy != NULL) {
+	line_ptr_copy = line_ptr; 
+
+        int bitshift = 24; 
+        while (line_ptr_copy != NULL) { 
             if (strstr(line_ptr_copy, ",") != NULL) { //if contains comma
-                token = strsep(&line_ptr_copy, ",");
-                stringToLowerCase(token);
+                token = strsep(&line_ptr_copy, ","); 
+                stringToLowerCase(token); 
                 line_ptr_copy = trimwhitespace(line_ptr_copy);
-            } else {
+		line_ptr = line_ptr_copy;
+            } else { //in the case of last element
                 token = line_ptr_copy;
                 line_ptr_copy = NULL;
             }
-            
+
             if (line_ptr_copy == NULL && (opcode == 3 || opcode == 4)) { //lw and sw instructions like lw $a0, 20($a1)
-                line_ptr_copy = token;
+		line_ptr_copy = token;
+		line_ptr = line_ptr_copy; 
                 token = strsep(&line_ptr_copy, "(");
                 token2 = strsep(&line_ptr_copy, ")");
                 map_clone = this->registers_map;
                 hashmap_get(map_clone, token2, &token_in_bits);
+		line_ptr_copy = line_ptr; 
                 bit_instruct_32 = bit_instruct_32 | (token_in_bits << bitshift);
                 token_in_bits = atoi(token);
                 bit_instruct_32 = bit_instruct_32 | token_in_bits;
                 line_ptr_copy = NULL;
             } else if (line_ptr_copy == NULL && (opcode == 5 || opcode == 6)) { //if last object is label
+		line_ptr = line_ptr_copy;
                 int *label_line_offset;
                 stringToLowerCase(token);
                 map_clone = this->symbol_table_map;
                 hashmap_get(map_clone, token, &label_line_offset); //printf("%d\n\n",*label_line_offset);
+		line_ptr_copy = line_ptr;
                 bit_instruct_32 = bit_instruct_32 | (0x000000FF & (*label_line_offset - line_num)); //copy offset from current instruct line num into bit_instruct_32
-            } else if (isdigit(token)) { //if immediate value
-                token_in_bits = atoi(token);
+		line_ptr_copy = NULL;
+            } else if (token[0] != '$') { //if immediate value
+		line_ptr = line_ptr_copy;
+                token_in_bits = atoi(token); 
                 //write 16 bit number into last 32 bits of bit_instruct_32
                 bit_instruct_32 = bit_instruct_32 | token_in_bits;
+		line_ptr_copy = line_ptr;
             } else { // else if register
+		line_ptr = line_ptr_copy;
                 stringToLowerCase(token);
-                map_clone = this->registers_map;
-                hashmap_get(map_clone, token, &token_in_bits);
-                bit_instruct_32 = bit_instruct_32 | (token_in_bits << bitshift);
+                map_clone = this->registers_map; 
+                hashmap_get(map_clone, token, &token_in_bits); 
+                bit_instruct_32 = bit_instruct_32 | (token_in_bits << bitshift); 
+		line_ptr_copy = line_ptr;
             }
             
             bitshift -= 4;
         }
 
         //write bitcode to object file
-        fprintf(wfp, "%08x", bit_instruct_32);
+        fprintf(wfp, "%08x", bit_instruct_32); 
         printf("%08x\n", bit_instruct_32);
-        
+
         line_num += 1;
+	line_ptr = line_malloc_loc;
     }
     
     
