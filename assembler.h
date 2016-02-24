@@ -26,6 +26,7 @@ typedef struct assembler_str {
     map_t operations_map;
     map_t registers_map;
     map_t symbol_table_map;
+    unsigned int start_loc;
 } ASSEMBLER_STR;
 typedef ASSEMBLER_STR * ASSEMBLER_STR_p;
 
