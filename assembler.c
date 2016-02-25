@@ -9,12 +9,12 @@
 
 int main () {
     
-    char * absolute_path = malloc(sizeof(char) * 100);
-    unsigned int * memory_array = calloc(100, sizeof(unsigned int));
+    char * absolute_path = (char *) malloc(sizeof(char) * 100);
+    unsigned int * memory_array = (unsigned int *) calloc(100, sizeof(unsigned int));
     int i = 0;
-    
-    strcpy(absolute_path, "/Users/temp/Documents/tcss_372/git_repo/lc2200simulator/test2.assem");
-    assemble(absolute_path, memory_array);
+
+    strcpy(absolute_path, "/home/user1/Documents/TCSS_372/github_repo/lc2200simulator/test2.assem");
+    assemble(absolute_path, memory_array); 
     
     /***** Instruction cycle *****/
     while (memory_array[i]) {
@@ -108,7 +108,7 @@ void assemble (char * loc_assem_file, unsigned int * instructions_array) {
     int line_buffer_size = sizeof(char) * 100;
     unsigned int opcode;
     int line_num = 0;
-    char * loc_object_file;
+//    char * loc_object_file;
     char * line_ptr = malloc(line_buffer_size);
     char * line_ptr_copy;
     char * line_malloc_loc = line_ptr;
@@ -126,9 +126,9 @@ void assemble (char * loc_assem_file, unsigned int * instructions_array) {
         exit(EXIT_FAILURE);
     
     //create file name for output object file
-    loc_object_file = malloc(sizeof(char) * 100);
-    strcpy(loc_object_file, strtok(loc_assem_file, "."));
-    strcat(loc_object_file, ".object");
+//    loc_object_file = malloc(sizeof(char) * 100);
+//    strcpy(loc_object_file, strtok(loc_assem_file, "."));
+//    strcat(loc_object_file, ".object");
     
     //open object file to write to
 //    wfp = fopen("./test.object", "w");
@@ -241,14 +241,14 @@ void assemble (char * loc_assem_file, unsigned int * instructions_array) {
         line_num += 1;
         line_ptr = line_malloc_loc;
     }
+ 
     
-    
-    fclose(rfp);
+    fclose(rfp); //comment out to fix free()  invalid next size (fast) error
 //    fclose(wfp);
     free(line_ptr);
-    free(loc_object_file);
-    
-    ASSEMBLER_destructor(this);
+//    free(loc_object_file);
+      
+    ASSEMBLER_destructor(this);  //comment out to fix free()  invalid next size (fast) error
     //print_keyset(this->operations_map);
     //print_keyset(this->symbol_table_map);
     //print_keyset(this->registers_map);
