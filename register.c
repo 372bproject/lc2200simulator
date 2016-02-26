@@ -5,6 +5,8 @@
  *      Author: Ray Kim
  */
 
+#include "register.h"
+
 /*
  *  Function: REGISTER_constructor
  *  ----------------------------
@@ -17,6 +19,7 @@ REGISTER_STR_p REGISTER_constructor (char * reg_name) {
     REGISTER_STR_p this = (REGISTER_STR_p) malloc(sizeof(REGISTER_STR));
     
     strcpy(this->reg_name, reg_name);
+    this->reg_value = 0;
     
     return this;
     

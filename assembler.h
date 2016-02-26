@@ -93,7 +93,7 @@ static int * index_to_int_ptr[] = {
 /* Prototypes */
 ASSEMBLER_STR_p ASSEMBLER_constructor();
 void ASSEMBLER_destructor(ASSEMBLER_STR_p);
-void assemble (char *, unsigned int *);
+unsigned int assemble (char *, unsigned int *);
 void firstParse (ASSEMBLER_STR_p, FILE *); //gathers all labels and assigns them addresses
 char * trimwhitespace (char *);
 void stringToLowerCase(char *);

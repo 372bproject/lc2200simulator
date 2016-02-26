@@ -7,27 +7,27 @@
 
 #include "assembler.h"
 
-int main () {
-    
-    char * absolute_path = (char *) malloc(sizeof(char) * 100);
-    unsigned int * memory_array = (unsigned int *) calloc(100, sizeof(unsigned int));
-    int i = 0;
-
-    strcpy(absolute_path, "/home/user1/Documents/TCSS_372/github_repo/lc2200simulator/test2.assem");
-    assemble(absolute_path, memory_array); 
-    
-    /***** Instruction cycle *****/
-    while (memory_array[i]) {
-        
-        printf("%08x\n", memory_array[i]);
-        
-        i++;
-    }
-    
-    //free resources
-    free(memory_array);
-    free(absolute_path);
-}
+//int main () {
+//    
+//    char * absolute_path = malloc(sizeof(char) * 100);
+//    unsigned int * memory_array = calloc(100, sizeof(unsigned int));
+//    int i = 0;
+//    
+//    strcpy(absolute_path, "/Users/temp/Documents/tcss_372/git_repo/lc2200simulator/test2.assem");
+//    assemble(absolute_path, memory_array);
+//    
+//    /***** Instruction cycle *****/
+//    while (memory_array[i]) {
+//        
+//        printf("%08x\n", memory_array[i]);
+//        
+//        i++;
+//    }
+//    
+//    //free resources
+//    free(memory_array);
+//    free(absolute_path);
+//}
 
 /*
  * ASSEMBLER_constructor
@@ -99,16 +99,17 @@ void ASSEMBLER_destructor(ASSEMBLER_STR_p this) {
  *
  * params:  char * String location of assembly file
  * 
- * return:  none
+ * return:  start location of instructions
  */
-void assemble (char * loc_assem_file, unsigned int * instructions_array) {
+unsigned int assemble (char * loc_assem_file, unsigned int * instructions_array) {
     
     FILE * rfp; //read file pointer
 //    FILE * wfp;
     int line_buffer_size = sizeof(char) * 100;
+    unsigned int start_loc;
     unsigned int opcode;
     int line_num = 0;
-//    char * loc_object_file;
+    char * loc_object_file;
     char * line_ptr = malloc(line_buffer_size);
     char * line_ptr_copy;
     char * line_malloc_loc = line_ptr;
@@ -126,9 +127,9 @@ void assemble (char * loc_assem_file, unsigned int * instructions_array) {
         exit(EXIT_FAILURE);
     
     //create file name for output object file
-//    loc_object_file = malloc(sizeof(char) * 100);
-//    strcpy(loc_object_file, strtok(loc_assem_file, "."));
-//    strcat(loc_object_file, ".object");
+    loc_object_file = malloc(sizeof(char) * 100);
+    strcpy(loc_object_file, strtok(loc_assem_file, "."));
+    strcat(loc_object_file, ".object");
     
     //open object file to write to
 //    wfp = fopen("./test.object", "w");
@@ -205,19 +206,29 @@ void assemble (char * loc_assem_file, unsigned int * instructions_array) {
                 token_in_bits = atoi(token);
                 bit_instruct_32 = bit_instruct_32 | token_in_bits;
                 line_ptr_copy = NULL;
-            } else if (line_ptr_copy == NULL && (opcode == 5 || opcode == 6)) { //if last object is label
+            } else if (line_ptr_copy == NULL && opcode == 5) { //if last object is label
                 line_ptr = line_ptr_copy;
                 int *label_line_offset;
                 stringToLowerCase(token);
                 map_clone = this->symbol_table_map;
                 hashmap_get(map_clone, token, &label_line_offset); //printf("%d\n\n",*label_line_offset);
                 line_ptr_copy = line_ptr;
-                bit_instruct_32 = bit_instruct_32 | (0x000000FF & (*label_line_offset - line_num)); //copy offset from current instruct line num into bit_instruct_32
+                bit_instruct_32 = bit_instruct_32 | (0x0000FFFF & (*label_line_offset - line_num - 1)); //copy offset from current instruct line num into bit_instruct_32
                 line_ptr_copy = NULL;
-            } else if (token[0] != '$') { //if immediate value
+            } else if (line_ptr_copy == NULL && opcode == 6) { //if instruction is jalr
+                line_ptr = line_ptr_copy;
+                int *label_line_offset;
+                stringToLowerCase(token);
+                map_clone = this->registers_map;
+                hashmap_get(map_clone, token, &token_in_bits);
+                line_ptr_copy = line_ptr;
+                bit_instruct_32 = bit_instruct_32 | (0x0F000000 & (token_in_bits << bitshift));
+                line_ptr_copy = NULL;
+            }else if (token[0] != '$') { //if immediate value
                 line_ptr = line_ptr_copy;
                 token_in_bits = atoi(token); 
                 //write 16 bit number into last 32 bits of bit_instruct_32
+                token_in_bits = token_in_bits & 0x0000FFFF;
                 bit_instruct_32 = bit_instruct_32 | token_in_bits;
                 line_ptr_copy = line_ptr;
             } else { // else if register
@@ -241,19 +252,20 @@ void assemble (char * loc_assem_file, unsigned int * instructions_array) {
         line_num += 1;
         line_ptr = line_malloc_loc;
     }
- 
     
-    fclose(rfp); //comment out to fix free()  invalid next size (fast) error
+    start_loc = this->start_loc;
+    
+    fclose(rfp);
 //    fclose(wfp);
     free(line_ptr);
-//    free(loc_object_file);
-      
-    ASSEMBLER_destructor(this);  //comment out to fix free()  invalid next size (fast) error
+    free(loc_object_file);
+    
+    ASSEMBLER_destructor(this);
     //print_keyset(this->operations_map);
     //print_keyset(this->symbol_table_map);
     //print_keyset(this->registers_map);
     
-    
+    return start_loc;
 }
 
 /*
