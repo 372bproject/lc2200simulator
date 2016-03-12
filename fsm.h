@@ -8,16 +8,19 @@
 #ifndef FSM_H_
 #define FSM_H_
 
+#define MEMORY_SIZE 5000
+
 #include "register.h"
 #include "alu.h"
 #include "assembler.h"
-#include "fms-micro.h"
+
+#include "memory.h"
 
 typedef struct fsm_str {
-    unsigned int pc;
     REGISTER_STR_p zero;
     REGISTER_STR_p at;
     REGISTER_STR_p v0;
+    REGISTER_STR_p a0;
     REGISTER_STR_p a1;
     REGISTER_STR_p a2;
     REGISTER_STR_p t0;
@@ -29,6 +32,9 @@ typedef struct fsm_str {
     REGISTER_STR_p sp;
     REGISTER_STR_p fp;
     REGISTER_STR_p ra;
+    unsigned int pc;
+    
+//    REGISTER_STR_p pc;
 
     
 } FSM_STR;
@@ -50,14 +56,14 @@ typedef enum instruction {
     NOOP
 } instruction_enum;
 
-typedef void (*functionPtr) (REGISTER_STR_p, REGISTER_STR_p, REGISTER_STR_p);
+
 
 /* Prototypes */
 FSM_STR_p FSM_constructor (void);
 void FSM_destructor (FSM_STR_p);
-void fetch (FSM_STR_p, unsigned int *, unsigned int);
-functionPtr * decode (FSM_STR_p, unsigned int, REGISTER_STR_p, REGISTER_STR_p, REGISTER_STR_p); //opcode
-void execute (functionPtr, REGISTER_STR_p, REGISTER_STR_p, REGISTER_STR_p);
+unsigned int fetch (unsigned int *, unsigned int);
+void decode (FSM_STR_p, unsigned int *, unsigned int, ALU_p); //opcode
 void interruptCheck (functionPtr); //
+void printAllRegisters(FSM_STR_p);
 
 #endif /* FSM_H_ */

@@ -26,6 +26,7 @@ typedef struct assembler_str {
     map_t operations_map;
     map_t registers_map;
     map_t symbol_table_map;
+    unsigned int start_loc;
 } ASSEMBLER_STR;
 typedef ASSEMBLER_STR * ASSEMBLER_STR_p;
 
@@ -92,7 +93,7 @@ static int * index_to_int_ptr[] = {
 /* Prototypes */
 ASSEMBLER_STR_p ASSEMBLER_constructor();
 void ASSEMBLER_destructor(ASSEMBLER_STR_p);
-void assemble (char *, unsigned int *);
+unsigned int assemble (char *, unsigned int *);
 void firstParse (ASSEMBLER_STR_p, FILE *); //gathers all labels and assigns them addresses
 char * trimwhitespace (char *);
 void stringToLowerCase(char *);
