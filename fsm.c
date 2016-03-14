@@ -10,43 +10,25 @@
 
 //GLOBALS
 
+/*
+ *  Function: FSM_initialize
+ *  ----------------------------
+ *
+ *	initializes all variables for FSM
+ *
+ *  params: unsigned char * absolute address
+ *			
+ *  return: unsigned int    start address of simulation
+ */
+FSM_STR_p FSM_initialize (FSM_STR_p this, char * absolute_path) {
 
-int main () {
-    unsigned int instruction;
-    unsigned int start_loc;
-    MEMORY_MODULE_STR_p memory_module_p = MEMORY_MODULE_constructor(MEMORY_SIZE);
+    this->memory_module_p = MEMORY_MODULE_constructor(MEMORY_SIZE);
     
-    char * absolute_path = malloc(sizeof(char) * 100);
-    
-    FSM_STR_p this = FSM_constructor();
     this->sp->reg_value = MEMORY_SIZE - 1; //set stack pointer value
 
-    ALU_p alu_p = ALU_constructor();
+    this->alu_p = ALU_constructor();
 
-    
-    strcpy(absolute_path, "/Users/temp/Documents/tcss_372/git_repo/lc2200simulator/test2.assem");
-    start_loc = assemble(absolute_path, memory_module_p->address_start_p);
-    
-    /***** Instruction cycle *****/
-    while (fetch(memory_module_p->address_start_p, this->pc)) {
-        this->pc++;
-        //fetch
-        instruction = fetch(memory_module_p->address_start_p, this->pc - 1);
-printf("instruction: %08x\n", instruction);
-        //decode and execute
-        decode(this, memory_module_p->address_start_p, instruction, alu_p);
-        
-        //printf("%08x\n", instruction);
-        printAllRegisters(this);
-        
-        
-    }
-    
-    //free resources
-    MEMORY_MODULE_destructor(memory_module_p);
-    free(absolute_path);
-    FSM_destructor(this);
-    ALU_destructor(alu_p);
+    this->start_address = assemble(absolute_path, this->memory_module_p->address_start_p);
 
 }
 
@@ -105,7 +87,7 @@ void decode (FSM_STR_p this, unsigned int * memory_start_p, unsigned int instruc
         }
 
         micro_state_num++;
-    }
+    } 
 }
 
 /*
@@ -136,6 +118,9 @@ FSM_STR_p FSM_constructor () {
     this->ra = REGISTER_constructor("ra");
 //    this->pc = REGISTER_constructor("ir"); //instruction register
     this->pc = 0;
+	this->start_address = 0;
+	this->alu_p = NULL;
+	this->memory_module_p = NULL;
     
     return this;
     
@@ -180,23 +165,164 @@ void FSM_destructor (FSM_STR_p this) {
  *  return: none
  */
 void printAllRegisters(FSM_STR_p this) {
-    printf("zero = %d\n", this->zero->reg_value);
-    printf("at = %d\n", this->at->reg_value);
-    printf("v0 = %d\n", this->v0->reg_value);
-    printf("a0 = %d\n", this->a0->reg_value);
-    printf("a1 = %d\n", this->a1->reg_value);
-    printf("a2 = %d\n", this->a2->reg_value);
-    printf("t0 = %d\n", this->t0->reg_value);
-    printf("t1 = %d\n", this->t1->reg_value);
-    printf("t2 = %d\n", this->t2->reg_value);
-    printf("s0 = %d\n", this->s0->reg_value);
-    printf("s1 = %d\n", this->s1->reg_value);
-    printf("k0 = %d\n", this->k0->reg_value);
-    printf("sp = %d\n", this->sp->reg_value);
-    printf("fp = %d\n", this->fp->reg_value);
-    printf("ra = %d\n", this->ra->reg_value);
+    printf("%s(%p) = %d\n", this->zero->reg_name,this->zero, this->zero->reg_value);
+    printf("%s(%p) = %d\n", this->at->reg_name, this->at, this->at->reg_value);
+    printf("%s(%p) = %d\n", this->v0->reg_name, this->v0, this->v0->reg_value);
+    printf("%s(%p) = %d\n", this->a0->reg_name, this->a0, this->a0->reg_value);
+    printf("%s(%p) = %d\n", this->a1->reg_name, this->a1, this->a1->reg_value);
+    printf("%s(%p) = %d\n", this->a2->reg_name, this->a2, this->a2->reg_value);
+    printf("%s(%p) = %d\n", this->t0->reg_name, this->t0, this->t0->reg_value);
+    printf("%s(%p) = %d\n", this->t1->reg_name, this->t1, this->t1->reg_value);
+    printf("%s(%p) = %d\n", this->t2->reg_name, this->t2, this->t2->reg_value);
+    printf("%s(%p) = %d\n", this->s0->reg_name, this->s0, this->s0->reg_value);
+    printf("%s(%p) = %d\n", this->s1->reg_name, this->s1, this->s1->reg_value);
+    printf("%s(%p) = %d\n", this->k0->reg_name, this->k0, this->k0->reg_value);
+    printf("%s(%p) = %d\n", this->sp->reg_name, this->sp, this->sp->reg_value);
+    printf("%s(%p) = %d\n", this->fp->reg_name, this->fp, this->fp->reg_value);
+    printf("%s(%p) = %d\n", this->ra->reg_name, this->ra, this->ra->reg_value);
     printf("pc = %d\n\n", this->pc);
+    //printf("register p size: %d", (unsigned int) sizeof(REGISTER_STR_p));
     
-    
+}
+
+/*
+ *  Function: FSM_get_registers
+ *  ----------------------------
+ *
+ *  places register data into given array
+ *
+ *  params: FSM_STR_p this
+ *			int * array that will contain register values
+ *  return: none
+ */
+void FSM_get_registers(FSM_STR_p this, int * registers_array){
+	
+	registers_array[0] = this->pc;
+	registers_array[1] = this->zero->reg_value;
+	registers_array[2] = this->at->reg_value;
+	registers_array[3] = this->v0->reg_value;
+	registers_array[4] = this->a0->reg_value;
+	registers_array[5] = this->a1->reg_value;
+	registers_array[6] = this->a2->reg_value;
+	registers_array[7] = this->t0->reg_value;
+	registers_array[8] = this->t1->reg_value;
+	registers_array[9] = this->t2->reg_value;
+	registers_array[10] = this->s0->reg_value;
+	registers_array[11] = this->s1->reg_value;
+	registers_array[12] = this->k0->reg_value;
+	registers_array[13] = this->sp->reg_value;
+	registers_array[14] = this->fp->reg_value;
+	registers_array[15] = this->ra->reg_value;
+
+
+}
+
+/*
+ *  Function: FMS_step
+ *  ----------------------------
+ *
+ *  Steps through each instruction
+ *
+ *  params: FSM_STR_p   this
+ *  return: unsigned int	0 if last "step" performed was last instruction, otherwise return instruction index num
+ */
+unsigned int FSM_step(FSM_STR_p this) {
+	unsigned int instruction;
+
+    /***** Instruction cycle *****/
+    if (fetch(this->memory_module_p->address_start_p, this->pc)) {
+        this->pc++;
+        //fetch
+        instruction = fetch(this->memory_module_p->address_start_p, this->pc - 1);
+//printf("instruction: %08x\n", instruction);
+        //decode and execute
+        decode(this, this->memory_module_p->address_start_p, instruction, this->alu_p);
+        
+        
+//printAllRegisters(this);
+        
+		return instruction;
+        
+    } else {
+		return 0;
+	}
+
+}
+
+
+/*
+ *  Function: FSM_run_through
+ *  ----------------------------
+ *
+ *  Runs through all of the rest of the remaining steps
+ *
+ *  params: FSM_STR_p this
+ *  return: unsigned int	return instruction index
+ */
+void FSM_run_through(FSM_STR_p this) {
+	unsigned int instruction;
+
+    /***** Instruction cycle *****/
+    while (fetch(this->memory_module_p->address_start_p, this->pc)) {
+        this->pc++;
+        //fetch
+        instruction = fetch(this->memory_module_p->address_start_p, this->pc - 1);
+//printf("instruction: %08x\n", instruction);
+        //decode and execute
+        decode(this, this->memory_module_p->address_start_p, instruction, this->alu_p);
+        
+        //printf("%08x\n", instruction);
+//printAllRegisters(this);
+        
+    }
+
+}
+
+/*
+ *  Function: FSM_reset
+ *  ----------------------------
+ *
+ *  resets logical back end
+ *
+ *  params: FSM_STR_p this
+ *  return: unsigned int	return instruction index
+ */
+void FSM_reset(FSM_STR_p this) {
+
+	this->zero->reg_value = 0;
+    this->at->reg_value = 0;
+    this->v0->reg_value = 0;
+    this->a0->reg_value = 0;
+    this->a1->reg_value = 0;
+    this->a2->reg_value = 0;
+    this->t0->reg_value = 0;
+    this->t1->reg_value = 0;
+    this->t2->reg_value = 0;
+    this->s0->reg_value = 0;
+    this->s1->reg_value = 0;
+    this->k0->reg_value = 0;
+    this->sp->reg_value = 0;
+    this->fp->reg_value = 0;
+    this->ra->reg_value = 0;
+    this->pc = 0;
+
+}
+
+
+/*
+ *  Function: FSM_destroy
+ *  ----------------------------
+ *
+ *  Release all assets created in initialize
+ *
+ *  params: FSM_STR_p this
+ *  return: unsigned int	return instruction index
+ */
+void FSM_destroy(FSM_STR_p this){
+	//free resources
+    MEMORY_MODULE_destructor(this->memory_module_p);
+    //FSM_destructor(this);
+    ALU_destructor(this->alu_p);
+
 }
 

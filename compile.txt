@@ -1,0 +1,2 @@
+cc `pkg-config --cflags --libs  gtk+-2.0` alu.c assembler.c fsm.c fsm-micro.c hashmap.c memory.c register.c mainGUI.c -o mainGUI -O0
+

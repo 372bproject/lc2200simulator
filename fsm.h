@@ -17,6 +17,7 @@
 #include "memory.h"
 
 typedef struct fsm_str {
+	unsigned int pc;
     REGISTER_STR_p zero;
     REGISTER_STR_p at;
     REGISTER_STR_p v0;
@@ -32,9 +33,11 @@ typedef struct fsm_str {
     REGISTER_STR_p sp;
     REGISTER_STR_p fp;
     REGISTER_STR_p ra;
-    unsigned int pc;
-    
-//    REGISTER_STR_p pc;
+
+	ALU_p alu_p;
+	MEMORY_MODULE_STR_p memory_module_p;
+
+	unsigned int start_address;
 
     
 } FSM_STR;
@@ -59,11 +62,17 @@ typedef enum instruction {
 
 
 /* Prototypes */
+FSM_STR_p FSM_initialize (FSM_STR_p, char *);
 FSM_STR_p FSM_constructor (void);
 void FSM_destructor (FSM_STR_p);
 unsigned int fetch (unsigned int *, unsigned int);
 void decode (FSM_STR_p, unsigned int *, unsigned int, ALU_p); //opcode
 void interruptCheck (functionPtr); //
 void printAllRegisters(FSM_STR_p);
+void FSM_get_registers(FSM_STR_p, int *);
+unsigned int FSM_step(FSM_STR_p);
+void FSM_run_through(FSM_STR_p);
+void FSM_reset(FSM_STR_p);
+void FSM_destroy(FSM_STR_p);
 
 #endif /* FSM_H_ */

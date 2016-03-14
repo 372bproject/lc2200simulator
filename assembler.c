@@ -88,7 +88,7 @@ void ASSEMBLER_destructor(ASSEMBLER_STR_p this) {
     //hashmap_free(this->symbol_table_map); //hashmap_free poorly written
     //hashmap_free(this->operations_map);
     //hashmap_free(this->registers_map);
-    free(this);
+    //free(this);
     
 }
 
@@ -257,8 +257,8 @@ unsigned int assemble (char * loc_assem_file, unsigned int * instructions_array)
     
     fclose(rfp);
 //    fclose(wfp);
-    free(line_ptr);
-    free(loc_object_file);
+    //free(line_ptr);
+    //free(loc_object_file);
     
     ASSEMBLER_destructor(this);
     //print_keyset(this->operations_map);

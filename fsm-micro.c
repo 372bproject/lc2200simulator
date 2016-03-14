@@ -42,7 +42,8 @@ unsigned int EXTERN_GLOBAL_MICRO_STATES[][7] = {
 unsigned int FSM_MICRO_execute (FSM_STR_p fsm_object_p, unsigned int * memory_start_p, functionPtr operation, unsigned int instruction, unsigned int control_signal, ALU_p alu_p) {
     
     unsigned int register_num;
-    char * base = (char *) (fsm_object_p->zero);
+    char * base = (char *) (&(fsm_object_p->pc)) + sizeof(REGISTER_STR_p); //printf("%p\t", base);printf("%p\t", &(fsm_object_p->zero)); printf("%p\t", &(fsm_object_p->at));printf("%p\t", &(fsm_object_p->v0));printf("%p\t", &(fsm_object_p->a0));puts("");
+	REGISTER_STR_p * reg_reference_p;
     REGISTER_STR_p reg_reference;
     
     
@@ -52,30 +53,36 @@ unsigned int FSM_MICRO_execute (FSM_STR_p fsm_object_p, unsigned int * memory_st
         case 1088: //set A = Ry
             register_num = instruction & 0x00F00000;
             register_num = register_num >> 20; //printf("%d\n", register_num);
-            reg_reference = (REGISTER_STR_p)(base + (register_num * 16)); //16 seems to be the offset from register pointer to register pointer within FSM_STR. register pointers may be reduced to 16 vs 32 or 64 by the optimizer
+            reg_reference_p = (REGISTER_STR_p *)(base + (sizeof(REGISTER_STR_p) * register_num)); //16 seems to be the offset from register pointer to register pointer within FSM_STR. register pointers may be reduced to 16 vs 32 or 64 by the optimizer
 //            printf("%x\n", base);
 //            printf("%x\n", fsm_object_p->a0->reg_name);
 //            printf("%x\n", reg_B->reg_name);
-            alu_p->A->reg_value = reg_reference->reg_value; //printf("alu_p->A: %d\n", alu_p->A->reg_value);
+			reg_reference = (REGISTER_STR_p)(*reg_reference_p);
+            alu_p->A->reg_value = reg_reference->reg_value;//printf("alu_p->A: %d\n", alu_p->A->reg_value);
             break;
         case 1057: //set B = Rx (this instruction is kinda wrong since technically for BEQ, A = Rx, B = Ry)
             register_num = instruction & 0x0F000000;
             register_num = register_num >> 24;
-            reg_reference = (REGISTER_STR_p)(base + (register_num * 16));
+            reg_reference_p = (REGISTER_STR_p *)(base + (sizeof(REGISTER_STR_p) * register_num));
+			reg_reference = (REGISTER_STR_p)(*reg_reference_p);
             alu_p->B->reg_value = reg_reference->reg_value; //printf("alu_p->B: %d\n", alu_p->B->reg_value);
             break;
         case 1056: //set B = Rz
             register_num = instruction & 0x000F0000;
             register_num = register_num >> 16;
-            reg_reference = (REGISTER_STR_p)(base + (register_num * 16));
+            reg_reference_p = (REGISTER_STR_p *)(base + (sizeof(REGISTER_STR_p) * register_num));
+			reg_reference = (REGISTER_STR_p)(*reg_reference_p);
             alu_p->B->reg_value = reg_reference->reg_value; //printf("alu_p->B: %d\n", alu_p->B->reg_value);
             break;
         case 2049: //Rx = A (operation) B
             register_num = instruction & 0x0F000000;
             register_num = register_num >> 24;
-            reg_reference = (REGISTER_STR_p)(base + (register_num * 16));
+            reg_reference_p = (REGISTER_STR_p *)(base + (sizeof(REGISTER_STR_p) * register_num));
+			reg_reference = (REGISTER_STR_p)(*reg_reference_p);
             operation(alu_p);
-            reg_reference->reg_value = alu_p->output->reg_value;
+            reg_reference->reg_value = alu_p->output->reg_value; 
+//printf("%d\n", reg_reference->reg_value);
+//printf("%s\n", reg_reference->reg_name);
             break;
         case 288: //set B = immediate value
             alu_p->B->reg_value = instruction & 0x0000FFFF;
@@ -90,13 +97,15 @@ unsigned int FSM_MICRO_execute (FSM_STR_p fsm_object_p, unsigned int * memory_st
         case 513: //(lw) set Rx = Ry + offset
             register_num = instruction & 0x0F000000;
             register_num = register_num >> 24;
-            reg_reference = (REGISTER_STR_p)(base + (register_num * 16));
+            reg_reference_p = (REGISTER_STR_p *)(base + (sizeof(REGISTER_STR_p) * register_num));
+			reg_reference = (REGISTER_STR_p)(*reg_reference_p);
             reg_reference->reg_value = memory_start_p[alu_p->output->reg_value];
             break;
         case 1026: //(sw) set Ry + offset = Rx
             register_num = instruction & 0x0F000000;
             register_num = register_num >> 24;
-            reg_reference = (REGISTER_STR_p)(base + (register_num * 16));
+            reg_reference_p = (REGISTER_STR_p *)(base + (sizeof(REGISTER_STR_p) * register_num));
+			reg_reference = (REGISTER_STR_p)(*reg_reference_p);
             memory_start_p[alu_p->output->reg_value] = reg_reference->reg_value;
             break;
         case 2052: //A - B comparison, then detect if result is 0
@@ -118,7 +127,8 @@ unsigned int FSM_MICRO_execute (FSM_STR_p fsm_object_p, unsigned int * memory_st
         case 1152: //set pc = Rx
             register_num = instruction & 0x0F000000;
             register_num = register_num >> 24;
-            reg_reference = (REGISTER_STR_p)(base + (register_num * 16));
+            reg_reference_p = (REGISTER_STR_p *)(base + (sizeof(REGISTER_STR_p) * register_num));
+			reg_reference = (REGISTER_STR_p)(*reg_reference_p);
             fsm_object_p->pc = reg_reference->reg_value;
             break;
             
